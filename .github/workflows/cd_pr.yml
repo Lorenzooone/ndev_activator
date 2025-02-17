@@ -1,0 +1,62 @@
+name: CD
+
+on: [pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.platform.name }} ${{ matrix.config.name }}
+    runs-on: ${{ matrix.platform.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+        - { name: Windows VS2022 x64,    os: windows-2022, flags: -A x64, artifact_name: win64}
+        - { name: Windows VS2022 ARM,    os: windows-2022, flags: -A ARM64, artifact_name: winarm64}
+        - { name: Windows VS2022 Win32,  os: windows-2022, flags: -A Win32, artifact_name: win32}
+        - { name: Linux GCC x64,         os: ubuntu-latest, flags: 64, artifact_name: linux64}
+        - { name: Linux GCC 32,          os: ubuntu-latest, flags: 32, artifact_name: linux32}
+        - { name: Linux GCC ARM 64,      os: ubuntu-latest, flags: arm64, artifact_name: linuxarm64}
+        - { name: Linux GCC ARM 32,      os: ubuntu-latest, flags: arm32, artifact_name: linuxarm32}
+        - { name: macOS Apple Silicon,   os: macos-14, artifact_name: macos  }
+        config:
+        - { name: Static, flags: -DBUILD_SHARED_LIBS=FALSE }
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure
+      if: runner.os != 'Linux'
+      shell: bash
+      run: cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install ${{matrix.platform.flags}} ${{matrix.config.flags}}
+
+    - name: Build Linux
+      if: runner.os == 'Linux'
+      run: docker run --rm -u root -v ${PWD}:/home/builder/ndev_activator lorenzooone/ndev_activator:builder${{matrix.platform.flags}}
+
+    - name: Build Windows
+      if: runner.os == 'Windows'
+      shell: bash
+      run: cmake --build build --config Release
+
+    - name: Build macOS
+      if: runner.os == 'macOS'
+      shell: bash
+      run: cmake --build build --config Release -j
+
+    - name: Pack (not Linux)
+      if: runner.os != 'Linux'
+      shell: bash
+      run: cd build && cpack -G ZIP
+
+    - name: Unpack Codesign Repack
+      if: runner.os == 'macOS'
+      shell: bash
+      run: setup_scripts/macos_bundle_signature.sh ndev_activator_macos
+
+    - name: Archive resulting artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ndev_activator-single-${{matrix.platform.artifact_name}}
+        path: build/ndev_activator*.zip

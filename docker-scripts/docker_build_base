@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cmake -S . -B $1 $2
+cmake --build $1 --config Release -j
+cd $1
+cpack -G ZIP
+mkdir -p /home/builder/ndev_activator/build
+cp ndev_activator*.zip /home/builder/ndev_activator/build
+cd ..

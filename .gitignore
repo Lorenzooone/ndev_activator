@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+*.o
+*.dll
+ndev_activator
+ndev_activator.exe
+*.conf
+*.a
+*.zip
+build*/
+!build-dockers/
+out/
+.vs/
+CMakeSettings.json

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cp -R /home/builder/ndev_activator/. .
+chmod -R +x .
+
+$1
