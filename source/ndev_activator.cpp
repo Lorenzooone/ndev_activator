@@ -1,4 +1,5 @@
 #include <iostream>
+#include "ndev_communications.hpp"
 
 #define NAME "ndev_activator"
 
@@ -30,5 +31,8 @@ static bool parse_int_arg(int &index, int argc, char **argv, int &target, std::s
 
 int main(int argc, char **argv) {
 	int ret_val = 0;
+	prepare_communications();
+	prepare_ndev_devices();
+	close_communications();
 	return ret_val;
 }

@@ -90,7 +90,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build ${TOOLS_DATA_DIR})
 
 set(OUTPUT_NAME ndev_activator)
 
-add_executable(${OUTPUT_NAME} source/ndev_activator.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0100.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0200.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0302_0100.cpp ${TOOLS_DATA_DIR}/payload_0301_0201.cpp ${TOOLS_DATA_DIR}/payload_0302_0101.cpp ${SOURCE_CPP_EXTRA_FILES})
+add_executable(${OUTPUT_NAME} source/ndev_activator.cpp source/ndev_communications.cpp source/ndev_libusb_communications.cpp source/usb_generic.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0100.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0200.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0302_0100.cpp ${TOOLS_DATA_DIR}/payload_0301_0201.cpp ${TOOLS_DATA_DIR}/payload_0302_0101.cpp ${SOURCE_CPP_EXTRA_FILES})
 
 if(NOT ("${EXTRA_DEPENDENCIES}" STREQUAL ""))
 	add_dependencies(${OUTPUT_NAME} ${EXTRA_DEPENDENCIES})
@@ -144,9 +144,9 @@ add_custom_command(
 )
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-install(TARGETS ${OUTPUT_NAME} DESTINATION .)
+	install(TARGETS ${OUTPUT_NAME} DESTINATION .)
 else()
-install(FILES ${CMAKE_SOURCE_DIR}/${OUTPUT_NAME}${FINAL_EXTENSION} DESTINATION .)
+	install(FILES ${CMAKE_SOURCE_DIR}/${OUTPUT_NAME}${FINAL_EXTENSION} DESTINATION .)
 endif()
 install(FILES LICENSE README.md DESTINATION .)
 install(DIRECTORY "other licenses" DESTINATION .)
