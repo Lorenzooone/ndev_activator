@@ -2,6 +2,18 @@
 #include "ndev_libusb_communications.hpp"
 #include <cstdio>
 
+int libusb_bulk_transfer_out(void* handle, const ndev_usb_data* usb_dev_data, const unsigned char* data, size_t length, int* num_transferred) {
+	return libusb_bulk_transfer((libusb_device_handle*)handle, 0x02, (unsigned char*)data, length, num_transferred, usb_dev_data->timeout_ms);
+}
+
+int libusb_disk_bulk_transfer_out(void* handle, const ndev_usb_data* usb_dev_data, const unsigned char* data, size_t length, int* num_transferred) {
+	return libusb_bulk_transfer((libusb_device_handle*)handle, 0x06, (unsigned char*)data, length, num_transferred, usb_dev_data->timeout_ms);
+}
+
+int libusb_bulk_transfer_in(void* handle, const ndev_usb_data* usb_dev_data, unsigned char* data, size_t length, int* num_transferred) {
+	return libusb_bulk_transfer((libusb_device_handle*)handle, 0x84, data, length, num_transferred, usb_dev_data->timeout_ms);
+}
+
 static int libusb_ctrl_transfer(void* handle, const ndev_usb_data* usb_dev_data, uint8_t bmRequestType, uint8_t bRequest, uint16_t wValue, uint16_t wIndex, unsigned char* data, uint16_t wLength) {
 	return libusb_control_transfer((libusb_device_handle*)handle, bmRequestType, bRequest, wValue, wIndex, data, wLength, usb_dev_data->timeout_ms);
 }
@@ -56,6 +68,16 @@ static int libusb_ctrl_transfer_in_has_done_second_setup(void* handle, const nde
 		return ret;
 	if(data != 0)
 		*done = true;
+	return ret;
+}
+
+static int libusb_ctrl_transfer_in_wait_transfer_ready(void* handle, const ndev_usb_data* usb_dev_data) {
+	uint8_t data = 0;
+	int ret = libusb_ctrl_transfer_in(handle, usb_dev_data, 5, 5, 0, &data, 1);
+	if(ret < 0)
+		return ret;
+	if(data != 1)
+		return -1;
 	return ret;
 }
 
@@ -139,6 +161,66 @@ bool libusb_prepare_ndev_devices(void) {
 	if(num_devices >= 0)
 		libusb_free_device_list(usb_devices, 1);
 	return re_run;
+}
+
+void libusb_connect_to_ndev_di(uint8_t* expected_data, ndev_di_handle* out_handle) {
+	if(!usb_is_initialized())
+		return;
+	libusb_device **usb_devices;
+	int num_devices = libusb_get_device_list(get_usb_ctx(), &usb_devices);
+	libusb_device_descriptor usb_descriptor{};
+	bool re_run = false;
+	uint8_t serial_data[NDEV_SERIAL_DATA_SIZE];
+
+	for(int i = 0; i < num_devices; i++) {
+		int result = libusb_get_device_descriptor(usb_devices[i], &usb_descriptor);
+		if(result < 0)
+			continue;
+		const ndev_usb_data* possible_usb_data = get_di_ndev_data();
+		if((possible_usb_data->vid != usb_descriptor.idVendor) || (possible_usb_data->pid != usb_descriptor.idProduct) || (possible_usb_data->bcd_device != usb_descriptor.bcdDevice))
+			continue;
+		libusb_device_handle *handle = NULL;
+		result = libusb_open(usb_devices[i], &handle);
+		if(result || (handle == NULL))
+			continue;
+		result = libusb_claim_interface(handle, possible_usb_data->interface_to_claim);
+		if(result < 0) {
+			libusb_close(handle);
+			continue;
+		}
+		bool done_setup = false;
+		result = libusb_ctrl_transfer_in_has_done_second_setup((void*)handle, possible_usb_data, &done_setup);
+		if((result < 0) || (!done_setup)) {
+			libusb_release_interface(handle, possible_usb_data->interface_to_claim);
+			libusb_close(handle);
+			continue;
+		}
+		result = libusb_get_ndev_serial((void*)handle, possible_usb_data, serial_data, NDEV_SERIAL_DATA_SIZE);
+		if((result >= 0) && is_ndev_serial_same(expected_data, serial_data) && (libusb_ctrl_transfer_in_wait_transfer_ready((void*)handle, possible_usb_data) >= 0)) {
+			out_handle->handle = (void*)handle;
+			out_handle->connected = true;
+			for(int j = 0; j < NDEV_SERIAL_DATA_SIZE; j++)
+				out_handle->serial[j] = serial_data[j];
+			break;
+		}
+		libusb_release_interface(handle, possible_usb_data->interface_to_claim);
+		libusb_close(handle);
+	}
+
+	if(num_devices >= 0)
+		libusb_free_device_list(usb_devices, 1);
+}
+
+void libusb_disconnect_from_ndev_di(ndev_di_handle* out_handle) {
+	if(!usb_is_initialized())
+		return;
+	if(out_handle->handle == NULL)
+		return;
+	const ndev_usb_data* possible_usb_data = get_di_ndev_data();
+	libusb_release_interface((libusb_device_handle*)out_handle->handle, possible_usb_data->interface_to_claim);
+	libusb_close((libusb_device_handle*)out_handle->handle);
+	out_handle->handle = NULL;
+	out_handle->connected = false;
 }
 
 void setup_libusb(void) {

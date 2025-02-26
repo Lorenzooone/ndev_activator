@@ -90,7 +90,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build ${TOOLS_DATA_DIR})
 
 set(OUTPUT_NAME ndev_activator)
 
-add_executable(${OUTPUT_NAME} source/ndev_activator.cpp source/ndev_communications.cpp source/ndev_libusb_communications.cpp source/usb_generic.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0100.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0200.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0302_0100.cpp ${TOOLS_DATA_DIR}/payload_0301_0201.cpp ${TOOLS_DATA_DIR}/payload_0302_0101.cpp ${SOURCE_CPP_EXTRA_FILES})
+add_executable(${OUTPUT_NAME} source/ndev_activator.cpp source/ndev_communications.cpp source/ndev_libusb_communications.cpp source/usb_generic.cpp source/utils.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0100.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0200.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0302_0100.cpp ${TOOLS_DATA_DIR}/payload_0301_0201.cpp ${TOOLS_DATA_DIR}/payload_0302_0101.cpp ${TOOLS_DATA_DIR}/no_disk_inserted.cpp ${SOURCE_CPP_EXTRA_FILES})
 
 if(NOT ("${EXTRA_DEPENDENCIES}" STREQUAL ""))
 	add_dependencies(${OUTPUT_NAME} ${EXTRA_DEPENDENCIES})
@@ -134,6 +134,13 @@ add_custom_command(
 	COMMENT "Convert USB Payload to C - 0302 0101"
 	COMMAND ${TOOLS_DATA_DIR}/CMakeBin2C${HOST_FINAL_EXTENSION} ${CMAKE_SOURCE_DIR}/bin/payload_0302_0101.bin ${TOOLS_DATA_DIR} payload_0302_0101 payload_0302_0101
 	DEPENDS ${CMAKE_SOURCE_DIR}/bin/payload_0302_0101.bin ${TOOLS_DATA_DIR}/CMakeBin2C${HOST_FINAL_EXTENSION}
+)
+
+add_custom_command(
+	OUTPUT ${TOOLS_DATA_DIR}/no_disk_inserted.cpp
+	COMMENT "Convert USB Payload to C - No disk inserted data"
+	COMMAND ${TOOLS_DATA_DIR}/CMakeBin2C${HOST_FINAL_EXTENSION} ${CMAKE_SOURCE_DIR}/bin/no_disk_inserted.bin ${TOOLS_DATA_DIR} no_disk_inserted no_disk_inserted
+	DEPENDS ${CMAKE_SOURCE_DIR}/bin/no_disk_inserted.bin ${TOOLS_DATA_DIR}/CMakeBin2C${HOST_FINAL_EXTENSION}
 )
 
 add_custom_command(
