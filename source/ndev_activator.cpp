@@ -5,6 +5,10 @@
 
 #define NAME "ndev_activator"
 
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 1
+#define VERSION_PATCH 0
+
 static void ConsoleOutText(std::string full_text) {
 	if(full_text != "")
 		std::cout << "[" << NAME << "] " << full_text << std::endl;
@@ -92,19 +96,28 @@ static void thread_do_di_keepalive(ndev_device_handle* di_handle, volatile bool*
 
 int main(int argc, char **argv) {
 	int ret_val = 0;
+	bool version_print = false;
 	volatile bool has_asked_stop = false;
 	bool has_read_serial = false;
 	uint8_t wanted_serial[NDEV_SERIAL_DATA_SIZE];
 	uint8_t* serial_ptr = NULL;
+	std::string version_string = std::to_string(VERSION_MAJOR) + "." + std::to_string(VERSION_MINOR) + "." + std::to_string(VERSION_PATCH);
 	for (int i = 1; i < argc; i++) {
 		if(parse_serial_arg(i, argc, argv, wanted_serial, has_read_serial, "--serial"))
 			continue;
 		if(parse_serial_arg(i, argc, argv, wanted_serial, has_read_serial, "-s"))
 			continue;
+		if(parse_existence_arg(i, argv, version_print, true, "--version"))
+			continue;
+		if(parse_existence_arg(i, argv, version_print, true, "-v"))
+			continue;
 		std::cout << "Help:" << std::endl;
 		std::cout << "  --serial/-s      Sets the serial that this application should look for." << std::endl;
+		std::cout << "  --version/-v     Prints the program's version." << std::endl;
 		return 0;
 	}
+	if(version_print)
+		ConsoleOutText("Version: " + version_string);
 	prepare_communications();
 	prepare_ndev_devices();
 	if(has_read_serial)
