@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BASE_AMD_STR="deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu/ "
-BASE_SECURITY_AMD_STR="deb [arch=amd64,i386] http://security.ubuntu.com/ubuntu/ "
+BASE_AMD_STR="deb [arch=amd64,i386 signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://archive.ubuntu.com/ubuntu/ "
+BASE_SECURITY_AMD_STR="deb [arch=amd64,i386 signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://security.ubuntu.com/ubuntu/ "
 BASE_ARM_STR="deb [arch=arm64,armhf] http://ports.ubuntu.com/ "
 NO_SPECIAL_STR=" main multiverse universe"
 SECURITY_STR="-security main multiverse universe"
@@ -13,7 +13,7 @@ LOCATION_AMD="${LOCATION_BASE}/x86_compilers.list"
 LOCATION_ARM="${LOCATION_BASE}/arm_compilers.list"
 
 LIST_ARCHITECTURES=("amd64" "i386" "arm64" "armhf")
-LIST_PACKAGES_BASE=()
+LIST_PACKAGES_BASE=("libudev-dev")
 LIST_PACKAGES_NORMAL=("g++-multilib-i686-linux-gnu" "g++-aarch64-linux-gnu" "g++-arm-linux-gnueabihf" "g++:amd64" "g++" "git")
 LIST_PACKAGES_SPECIAL=()
 
@@ -33,7 +33,8 @@ echo "${BASE_ARM_STR}$(lsb_release -sc)${UPDATES_STR}" >> ${LOCATION_ARM}
 #done
 
 dpkg --add-architecture $1
-apt update
+apt-get update
+apt-get upgrade
 
 #for a in ${LIST_ARCHITECTURES[@]};
 #do
@@ -50,19 +51,19 @@ for p in ${LIST_PACKAGES_SPECIAL[@]};
 do
 	PACKAGES="${PACKAGES} ${p}:$1"
 done
-apt install -y ${PACKAGES}
+apt-get install -y ${PACKAGES} --fix-missing
 
 PACKAGES=""
 for p in ${LIST_PACKAGES_BASE[@]};
 do
 	PACKAGES="${PACKAGES} ${p}:$1"
 done
-apt install -y ${PACKAGES}
+apt-get install -y ${PACKAGES} --fix-missing
 
 PACKAGES=""
 for p in ${LIST_PACKAGES_NORMAL[@]};
 do
 	PACKAGES="${PACKAGES} ${p}"
 done
-apt install -y ${PACKAGES}
+apt-get install -y ${PACKAGES} --fix-missing
 

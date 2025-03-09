@@ -1,8 +1,10 @@
 ################################################################################
 ###  Build cmake                                                             ###
 ################################################################################
-FROM ubuntu:jammy as base_builder
-RUN apt update && apt install -y lsb-release g++ build-essential wget git libssl-dev pkg-config
+FROM ubuntu:focal as base_builder
+#RUN userdel -r ubuntu
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y lsb-release g++ build-essential wget git libssl-dev pkg-config
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.30.2/cmake-3.30.2.tar.gz
 RUN tar -xvf cmake-3.30.2.tar.gz
 RUN cd cmake-3.30.2 && ./bootstrap && make -j && make install

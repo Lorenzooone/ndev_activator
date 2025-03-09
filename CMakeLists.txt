@@ -54,6 +54,7 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	set(FINAL_EXTENSION ".exe")
+	list(APPEND EXTRA_LIBRARIES setupapi.lib)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 else()
 endif()
@@ -90,13 +91,13 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build ${TOOLS_DATA_DIR})
 
 set(OUTPUT_NAME ndev_activator)
 
-add_executable(${OUTPUT_NAME} source/ndev_activator.cpp source/ndev_communications.cpp source/ndev_libusb_communications.cpp source/usb_generic.cpp source/utils.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0100.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0200.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0302_0100.cpp ${TOOLS_DATA_DIR}/payload_0301_0201.cpp ${TOOLS_DATA_DIR}/payload_0302_0101.cpp ${TOOLS_DATA_DIR}/no_disk_inserted.cpp ${SOURCE_CPP_EXTRA_FILES})
+add_executable(${OUTPUT_NAME} source/ndev_activator.cpp source/ndev_communications.cpp source/ndev_libusb_communications.cpp source/ndev_driver_communications.cpp source/usb_generic.cpp source/utils.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0100.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0301_0200.cpp ${TOOLS_DATA_DIR}/usb_setup_data_0302_0100.cpp ${TOOLS_DATA_DIR}/payload_0301_0201.cpp ${TOOLS_DATA_DIR}/payload_0302_0101.cpp ${TOOLS_DATA_DIR}/no_disk_inserted.cpp ${SOURCE_CPP_EXTRA_FILES})
 
 if(NOT ("${EXTRA_DEPENDENCIES}" STREQUAL ""))
 	add_dependencies(${OUTPUT_NAME} ${EXTRA_DEPENDENCIES})
 endif()
 
-target_link_libraries(${OUTPUT_NAME} PRIVATE usb-1.0)
+target_link_libraries(${OUTPUT_NAME} PRIVATE usb-1.0 ${EXTRA_LIBRARIES})
 target_include_directories(${OUTPUT_NAME} PRIVATE ${EXTRA_INCLUDE_DIRECTORIES} ${TOOLS_DATA_DIR} ${CMAKE_SOURCE_DIR}/include)
 target_compile_features(${OUTPUT_NAME} PRIVATE cxx_std_20)
 target_compile_options(${OUTPUT_NAME} PRIVATE ${EXTRA_CXX_FLAGS})

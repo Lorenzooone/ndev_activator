@@ -2,7 +2,9 @@
 #define __UTILS_HPP
 
 #include <cstdint>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #if _MSC_VER && !__INTEL_COMPILER
 #define PACKED

@@ -83,7 +83,7 @@ static bool parse_serial_arg(int &index, int argc, char **argv, uint8_t *wanted_
 	return true;
 }
 
-static void thread_do_di_keepalive(ndev_di_handle* di_handle, volatile bool* has_asked_stop) {
+static void thread_do_di_keepalive(ndev_device_handle* di_handle, volatile bool* has_asked_stop) {
 	while(di_handle->connected && (!(*has_asked_stop))) {
 		iter_keep_disk_interface_active(di_handle);
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 	prepare_ndev_devices();
 	if(has_read_serial)
 		serial_ptr = wanted_serial;
-	ndev_di_handle di_handle = connect_to_disk_interface(serial_ptr);
+	ndev_device_handle di_handle = connect_to_disk_interface(serial_ptr);
 	if(di_handle.connected)
 		ConsoleOutText("Connected to DI of: " + serial_to_string(di_handle.serial));
 	setup_disk_interface_active(&di_handle);
